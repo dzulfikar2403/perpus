@@ -70,7 +70,6 @@
                 <li class="nav-item"> <a class="nav-link" href="{{ route ('admin/categorys') }}">tambah kategori</a></li>
                 <li class="nav-item"> <a class="nav-link" href="{{ route ('admin/authors') }}">tambah pengarang</a></li>
                 <li class="nav-item"> <a class="nav-link" href="{{ route ('admin/publishers') }}">tambah penerbit</a></li>
-                <li class="nav-item"> <a class="nav-link" href="{{ route ('admin/publishers') }}">tambah penerbit</a></li>
               </ul>
             </div>
           </li>

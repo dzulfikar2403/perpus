@@ -13,6 +13,7 @@ use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\PenerbitController;
 use App\Http\Controllers\PengarangController;
 use App\Http\Controllers\PinjamController;
+use App\Http\Controllers\RatingController;
 use App\Http\Controllers\userController;
 use App\Models\pengarang;
 
@@ -38,9 +39,9 @@ Route::get('/', function () {
 // Route::resource('pinjam', PinjamController::class);
 
 
-Route::get('/login', function () {
-    return view('login');
-});
+// Route::get('/login', function () {
+//     return view('login');
+// });
 
 Route::controller(AuthController::class)->group(function(){
     //register
@@ -64,7 +65,8 @@ Route::middleware(['auth', 'user-access:siswa'])->group(function(){
     // Route::get('/siswa/peminjaman/batal/{id}', [PeminjamanController::class, 'batal'])->name('peminjaman.batal');
     Route::post('/peminjaman/{id}/batal', [PeminjamanController::class, 'batal'])->name('peminjaman.batal');
     Route::post('/peminjaman/{id}/kembali', [PeminjamanController::class, 'kembali'])->name('peminjaman.kembali');
-
+    Route::get('ratings/{id}/create', [RatingController::class, 'create'])->name('ratings.create');
+    Route::post('ratings/{id}', [RatingController::class, 'store'])->name('ratings.store');
 });
 
 Route::middleware(['auth', 'user-access:admin'])->group(function(){

@@ -31,62 +31,71 @@ class PeminjamanController extends Controller
     }
 
     public function store($id)
-    {
-        // if (!Auth::check()) {
-        //     return redirect()->route('account.login')->with('error', 'Anda harus login untuk meminjam buku');
-        // }
-    
-        // Cek jumlah peminjaman aktif pengguna
-        $BukuBatas = $this->checkActiveLoans();
-    
-        if ($BukuBatas >= 5) {
-            return redirect()->back()->with('gagal', 'Anda tidak dapat meminjam lebih dari 5 buku sekaligus.');
-        }
-    
-        // Membatasi peminjaman 1 akun 1 buku dengan status 'disetujui'
-        $BukuBatas = Pinjam::where('user', Auth::user()->id)
-            ->where('buku', $id)
-            ->where('status', 'disetujui')
-            ->first();
-    
-        if ($BukuBatas) {
-            return redirect()->back()->with('gagal', 'Anda sudah meminjam buku ini.');
-        }
-    
-        // Cek ketersediaan stok buku
-        $cek = DB::table('bukus')->where('id', $id)->where('stock', '>', 0)->count();
-        if ($cek > 0) {
-            DB::table('peminjaman')->insert([
-                'buku' => $id,
-                'user' => Auth::user()->id,
-                'denda' => 0,
-                'tangal_peminjaman' => null,
-                'pengajuan' => Carbon::now(),
-                'tanggal_pengembalian' => null,
-                'status' => 'pengajuan' // Set status here
-            ]);
-    
-            $buku = DB::table('bukus')->where('id', $id)->first();
-            $stock_baru = $buku->stock - 1;
-    
-            DB::table('bukus')->where('id', $id)->update(['stock' => $stock_baru]);
-            return redirect()->back()->with('success', 'Anda berhasil meminjam');
-        } else {
-            return redirect()->back()->with('gagal', 'Buku Tidak Tersedia');
-        }
+{
+    // if (!Auth::check()) {
+    //     return redirect()->route('account.login')->with('error', 'Anda harus login untuk meminjam buku');
+    // }
+
+    // Cek jumlah peminjaman aktif pengguna
+    $BukuBatas = $this->checkActiveLoans();
+
+    if ($BukuBatas >= 5) {
+        return redirect()->back()->with('gagal', 'Anda tidak dapat meminjam lebih dari 5 buku sekaligus.');
     }
+
+    // Membatasi peminjaman 1 akun 1 buku dengan status 'disetujui'
+    $BukuBatas = Pinjam::where('user', Auth::user()->id)
+        ->where('buku', $id)
+        ->where('status', 'pengajuan')
+        ->first();
+
+    if ($BukuBatas) {
+        return redirect()->back()->with('gagal', 'Anda sudah meminjam buku ini.');
+    }
+
+    // Cek ketersediaan stok buku
+    $cek = DB::table('bukus')->where('id', $id)->where('stock', '>', 0)->count();
+    if ($cek > 0) {
+        DB::table('peminjaman')->insert([
+            'buku' => $id,
+            'user' => Auth::user()->id,
+            'denda' => 0,
+            'tangal_peminjaman' => null,
+            'pengajuan' => Carbon::now(),
+            'tanggal_pengembalian' => null,
+            'status' => 'pengajuan' // Set status here
+        ]);
+
+        return redirect()->back()->with('success', 'Anda berhasil meminjam');
+    } else {
+        return redirect()->back()->with('gagal', 'Buku Tidak Tersedia');
+    }
+}
+
     
 
 
 public function accept($id)
 {
     $peminjaman = Pinjam::findOrFail($id);
-    $peminjaman->status = 'disetujui';
-    $peminjaman->tangal_peminjaman = Carbon::now()->toDateString();
-    $peminjaman->tanggal_pengembalian = Carbon::now()->addDays(10);
-    $peminjaman->save();
 
-    return redirect()->back()->with('success', 'Peminjaman disetujui');
+    // Cek ketersediaan stok buku sebelum mengurangi
+    $buku = DB::table('bukus')->where('id', $peminjaman->buku)->first();
+    if ($buku->stock > 0) {
+        // Update status peminjaman
+        $peminjaman->status = 'disetujui';
+        $peminjaman->tangal_peminjaman = Carbon::now()->toDateString();
+        $peminjaman->tanggal_pengembalian = Carbon::now()->addDays(10);
+        $peminjaman->save();
+
+        // Kurangi stok buku
+        $stock_baru = $buku->stock - 1;
+        DB::table('bukus')->where('id', $peminjaman->buku)->update(['stock' => $stock_baru]);
+
+        return redirect()->back()->with('success', 'Peminjaman disetujui');
+    } else {
+        return redirect()->back()->with('gagal', 'Stok buku tidak mencukupi');
+    }
 }
 
     public function remove($id)
